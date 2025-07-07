@@ -1,10 +1,7 @@
 import { Undo2, Redo2, Download, Trash2 } from 'lucide-react';
-import React, { useState } from 'react';
+import React from 'react';
 
 interface ControlsProps {
-  canvasWidth: number;
-  canvasHeight: number;
-  onCanvasSizeChange: (width: number, height: number) => void;
   onClearCanvas: () => void;
   onUndo: () => void;
   onRedo: () => void;
@@ -14,12 +11,10 @@ interface ControlsProps {
   canUndo: boolean;
   canRedo: boolean;
   onImport: (file: File) => void;
+  onNewDrawing: () => void;
 }
 
 export default function Controls({
-  canvasWidth,
-  canvasHeight,
-  onCanvasSizeChange,
   onClearCanvas,
   onUndo,
   onRedo,
@@ -28,7 +23,8 @@ export default function Controls({
   onPixelSizeChange,
   canUndo,
   canRedo,
-  onImport
+  onImport,
+  onNewDrawing
 }: ControlsProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const handleImportClick = () => fileInputRef.current?.click();
@@ -39,77 +35,16 @@ export default function Controls({
     }
   };
 
-  // Local state for canvas size inputs
-  const [widthInput, setWidthInput] = useState(canvasWidth.toString());
-  const [heightInput, setHeightInput] = useState(canvasHeight.toString());
-
-  // Keep local state in sync with props
-  React.useEffect(() => {
-    setWidthInput(canvasWidth.toString());
-  }, [canvasWidth]);
-  React.useEffect(() => {
-    setHeightInput(canvasHeight.toString());
-  }, [canvasHeight]);
-
-  const handleWidthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setWidthInput(e.target.value.replace(/[^0-9]/g, ''));
-  };
-  const handleHeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setHeightInput(e.target.value.replace(/[^0-9]/g, ''));
-  };
-
-  const commitWidth = () => {
-    const width = parseInt(widthInput, 10);
-    if (!isNaN(width) && width >= 8 && width <= 128 && width !== canvasWidth) {
-      onCanvasSizeChange(width, canvasHeight);
-    } else {
-      setWidthInput(canvasWidth.toString());
-    }
-  };
-  const commitHeight = () => {
-    const height = parseInt(heightInput, 10);
-    if (!isNaN(height) && height >= 8 && height <= 128 && height !== canvasHeight) {
-      onCanvasSizeChange(canvasWidth, height);
-    } else {
-      setHeightInput(canvasHeight.toString());
-    }
-  };
-
-  const handleWidthKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') commitWidth();
-  };
-  const handleHeightKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') commitHeight();
-  };
-
   return (
     <div className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex flex-wrap items-center gap-4">
-        {/* Canvas Size Controls */}
-        <div className="flex items-center space-x-2">
-          <label className="text-sm font-medium text-gray-700">Size:</label>
-          <input
-            type="number"
-            min="8"
-            max="128"
-            value={widthInput}
-            onChange={handleWidthChange}
-            onBlur={commitWidth}
-            onKeyDown={handleWidthKeyDown}
-            className="w-16 px-2 py-1 border border-gray-300 rounded text-sm bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-400"
-          />
-          <span className="text-gray-500">×</span>
-          <input
-            type="number"
-            min="8"
-            max="128"
-            value={heightInput}
-            onChange={handleHeightChange}
-            onBlur={commitHeight}
-            onKeyDown={handleHeightKeyDown}
-            className="w-16 px-2 py-1 border border-gray-300 rounded text-sm bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-400"
-          />
-        </div>
+        {/* New Drawing Button replaces Canvas Size Controls */}
+        <button
+          className="bg-green-500 text-white px-4 py-2 rounded-lg font-medium shadow hover:bg-green-600 transition"
+          onClick={onNewDrawing}
+        >
+          New Drawing
+        </button>
 
         {/* Pixel Size Control */}
         <div className="flex items-center space-x-2">

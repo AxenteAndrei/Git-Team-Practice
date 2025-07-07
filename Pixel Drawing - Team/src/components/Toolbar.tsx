@@ -23,7 +23,6 @@ export default function Toolbar({ currentTool, onToolChange, brushShape, onBrush
   return (
     <div className="bg-white rounded-lg shadow-lg p-4 mb-4">
       <h3 className="text-lg font-semibold text-gray-800 mb-3">Tools</h3>
-      
       <div className="space-y-2 mb-4">
         {tools.map((tool) => {
           const Icon = tool.icon;
