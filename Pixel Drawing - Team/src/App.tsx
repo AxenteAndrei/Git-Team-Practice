@@ -9,12 +9,29 @@ import { createEmptyCanvas, defaultColor, exportCanvasAsPNG } from './utils';
 import React from 'react';
 
 function App() {
-  const [canvasState, setCanvasState] = useState<CanvasState>(() => createEmptyCanvas(32, 32));
+  // Multiple canvases state
+  const [canvases, setCanvases] = useState<Array<{
+    name: string;
+    canvasState: CanvasState;
+    history: HistoryState[];
+    historyIndex: number;
+  }>>([
+    {
+      name: 'Canvas 1',
+      canvasState: createEmptyCanvas(32, 32),
+      history: [{ canvasState: createEmptyCanvas(32, 32), timestamp: Date.now() }],
+      historyIndex: 0,
+    },
+  ]);
+  const [activeCanvas, setActiveCanvas] = useState(0);
+
+  // Extract current canvas data
+  const current = canvases[activeCanvas];
+  const { canvasState, history, historyIndex } = current;
+
   const [currentColor, setCurrentColor] = useState<Color>(defaultColor);
   const [currentTool, setCurrentTool] = useState<Tool>('pencil');
   const [pixelSize, setPixelSize] = useState(16);
-  const [history, setHistory] = useState<HistoryState[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(0);
   const [showHelp, setShowHelp] = useState(false);
   const [readmeContent, setReadmeContent] = useState<string>('');
   const [brushShape, setBrushShape] = useState<BrushShape>('circle');
@@ -34,13 +51,6 @@ function App() {
     }
   }, [darkMode]);
 
-  // Initialize history with the initial canvas state on mount
-  React.useEffect(() => {
-    const initialState = { canvasState, timestamp: Date.now() };
-    setHistory([initialState]);
-    setHistoryIndex(0);
-  }, []);
-
   const pushRecentCustomColor = useCallback((color: Color) => {
     setRecentCustomColors(prev => {
       const colorEquals = (a: Color, b: Color) =>
@@ -53,77 +63,88 @@ function App() {
     });
   }, []);
 
+  // Canvas management functions
+  const addCanvas = () => {
+    setCanvases(prev => [
+      ...prev,
+      {
+        name: `Canvas ${prev.length + 1}`,
+        canvasState: createEmptyCanvas(32, 32),
+        history: [{ canvasState: createEmptyCanvas(32, 32), timestamp: Date.now() }],
+        historyIndex: 0,
+      },
+    ]);
+    setActiveCanvas(canvases.length); // switch to new canvas
+  };
+
+  const deleteCanvas = () => {
+    if (canvases.length === 1) return;
+    const newCanvases = canvases.filter((_, i) => i !== activeCanvas);
+    setCanvases(newCanvases);
+    setActiveCanvas(Math.max(0, activeCanvas - 1));
+  };
+
+  const switchCanvas = (idx: number) => setActiveCanvas(idx);
+
+  // Update current canvas state/history
+  const updateCurrentCanvas = (update: Partial<typeof current>) => {
+    setCanvases(prev => prev.map((c, i) =>
+      i === activeCanvas ? { ...c, ...update } : c
+    ));
+  };
+
   // Save to history on every canvas change (except undo/redo)
   const handleCanvasChange = useCallback((newState: CanvasState) => {
-    setCanvasState(newState);
-    setHistory(prevHistory => {
-      const newHistory = prevHistory.slice(0, historyIndex + 1);
-      newHistory.push({ canvasState: newState, timestamp: Date.now() });
-      // Limit history to 50 entries
-      if (newHistory.length > 50) newHistory.shift();
-      return newHistory;
+    updateCurrentCanvas({
+      canvasState: newState,
+      history: (() => {
+        const newHistory = history.slice(0, historyIndex + 1);
+        newHistory.push({ canvasState: newState, timestamp: Date.now() });
+        if (newHistory.length > 50) newHistory.shift();
+        return newHistory;
+      })(),
+      historyIndex: Math.min(historyIndex + 1, 49),
     });
-    setHistoryIndex(prevIndex => {
-      const newIndex = prevIndex + 1;
-      return newIndex > 49 ? 49 : newIndex;
-    });
-  }, [historyIndex]);
-
-  const handleCanvasSizeChange = useCallback((width: number, height: number) => {
-    if (width < 8 || width > 128 || height < 8 || height > 128) return;
-    
-    const newState = createEmptyCanvas(width, height);
-    setCanvasState(newState);
-    setHistory(prevHistory => {
-      const newHistory = prevHistory.slice(0, historyIndex + 1);
-      newHistory.push({ canvasState: newState, timestamp: Date.now() });
-      // Limit history to 50 entries
-      if (newHistory.length > 50) newHistory.shift();
-      return newHistory;
-    });
-    setHistoryIndex(prevIndex => {
-      const newIndex = prevIndex + 1;
-      return newIndex > 49 ? 49 : newIndex;
-    });
-  }, [historyIndex]);
-
-  const handleClearCanvas = useCallback(() => {
-    const newState = createEmptyCanvas(canvasState.width, canvasState.height);
-    setCanvasState(newState);
-    setHistory(prevHistory => {
-      const newHistory = prevHistory.slice(0, historyIndex + 1);
-      newHistory.push({ canvasState: newState, timestamp: Date.now() });
-      // Limit history to 50 entries
-      if (newHistory.length > 50) newHistory.shift();
-      return newHistory;
-    });
-    setHistoryIndex(prevIndex => {
-      const newIndex = prevIndex + 1;
-      return newIndex > 49 ? 49 : newIndex;
-    });
-  }, [canvasState.width, canvasState.height, historyIndex]);
+  }, [history, historyIndex, activeCanvas]);
 
   // Undo
   const handleUndo = useCallback(() => {
-    setHistoryIndex(prevIndex => {
-      if (prevIndex > 0) {
-        setCanvasState(history[prevIndex - 1].canvasState);
-        return prevIndex - 1;
-      }
-      return prevIndex;
-    });
-  }, [history]);
+    if (historyIndex > 0) {
+      updateCurrentCanvas({
+        canvasState: history[historyIndex - 1].canvasState,
+        historyIndex: historyIndex - 1,
+      });
+    }
+  }, [history, historyIndex, activeCanvas]);
 
   // Redo
   const handleRedo = useCallback(() => {
-    setHistoryIndex(prevIndex => {
-      if (prevIndex < history.length - 1) {
-        setCanvasState(history[prevIndex + 1].canvasState);
-        return prevIndex + 1;
-      }
-      return prevIndex;
+    if (historyIndex < history.length - 1) {
+      updateCurrentCanvas({
+        canvasState: history[historyIndex + 1].canvasState,
+        historyIndex: historyIndex + 1,
+      });
+    }
+  }, [history, historyIndex, activeCanvas]);
+
+  const handleCanvasSizeChange = useCallback((width: number, height: number) => {
+    if (width < 8 || width > 128 || height < 8 || height > 128) return;
+    const newState = createEmptyCanvas(width, height);
+    updateCurrentCanvas({
+      canvasState: newState,
+      history: [{ canvasState: newState, timestamp: Date.now() }],
+      historyIndex: 0,
     });
-  }, [history]);
+  }, [activeCanvas]);
+
+  const handleClearCanvas = useCallback(() => {
+    const newState = createEmptyCanvas(canvasState.width, canvasState.height);
+    updateCurrentCanvas({
+      canvasState: newState,
+      history: [{ canvasState: newState, timestamp: Date.now() }],
+      historyIndex: 0,
+    });
+  }, [canvasState.width, canvasState.height, activeCanvas]);
 
   const handleExport = useCallback(() => {
     exportCanvasAsPNG(canvasState);
@@ -193,6 +214,34 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col text-gray-900 dark:text-gray-100">
+      {/* Canvas Tabs */}
+      <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-2">
+        {canvases.map((c, i) => (
+          <button
+            key={i}
+            onClick={() => switchCanvas(i)}
+            className={`px-3 py-1 rounded-t font-medium transition-colors ${i === activeCanvas ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
+          >
+            {c.name}
+          </button>
+        ))}
+        <button
+          onClick={addCanvas}
+          className="ml-2 px-3 py-1 rounded-t bg-green-500 text-white font-bold hover:bg-green-600 transition-colors"
+          title="Add new canvas"
+        >
+          +
+        </button>
+        {canvases.length > 1 && (
+          <button
+            onClick={deleteCanvas}
+            className="ml-2 px-3 py-1 rounded-t bg-red-500 text-white font-bold hover:bg-red-600 transition-colors"
+            title="Delete current canvas"
+          >
+            ×
+          </button>
+        )}
+      </div>
       {/* Help Button */}
       <button
         onClick={openHelp}
