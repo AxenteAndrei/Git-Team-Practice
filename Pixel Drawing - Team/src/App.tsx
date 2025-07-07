@@ -107,17 +107,8 @@ function App() {
       })(),
       historyIndex: Math.min(historyIndex + 1, 49),
     });
-<<<<<<< HEAD
   }, [history, historyIndex, activeCanvas]);
-=======
-    setHistoryIndex(prevIndex => {
-      const newIndex = prevIndex + 1;
-      return newIndex > 49 ? 49 : newIndex;
-    });
-  }, [historyIndex]);
 
-<<<<<<< HEAD
-=======
   const handleCanvasSizeChange = useCallback((width: number, height: number) => {
     if (width < 8 || width > 128 || height < 8 || height > 128) return;
     
@@ -136,7 +127,6 @@ function App() {
     });
   }, [historyIndex]);
 
->>>>>>> 526747acee1af149aba63c78e2efc139ccde645d
   const handleClearCanvas = useCallback(() => {
     const newState = createEmptyCanvas(canvasState.width, canvasState.height);
     setCanvasState(newState);
@@ -152,7 +142,6 @@ function App() {
       return newIndex > 49 ? 49 : newIndex;
     });
   }, [canvasState.width, canvasState.height, historyIndex]);
->>>>>>> 25e1782e199b6f37474dd64cca6bd961181fa8ab
 
   // Undo
   const handleUndo = useCallback(() => {
@@ -173,25 +162,6 @@ function App() {
       });
     }
   }, [history, historyIndex, activeCanvas]);
-
-  const handleCanvasSizeChange = useCallback((width: number, height: number) => {
-    if (width < 8 || width > 128 || height < 8 || height > 128) return;
-    const newState = createEmptyCanvas(width, height);
-    updateCurrentCanvas({
-      canvasState: newState,
-      history: [{ canvasState: newState, timestamp: Date.now() }],
-      historyIndex: 0,
-    });
-  }, [activeCanvas]);
-
-  const handleClearCanvas = useCallback(() => {
-    const newState = createEmptyCanvas(canvasState.width, canvasState.height);
-    updateCurrentCanvas({
-      canvasState: newState,
-      history: [{ canvasState: newState, timestamp: Date.now() }],
-      historyIndex: 0,
-    });
-  }, [canvasState.width, canvasState.height, activeCanvas]);
 
   const handleExport = useCallback(() => {
     exportCanvasAsPNG(canvasState);
@@ -296,7 +266,6 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col text-gray-900 dark:text-gray-100">
-<<<<<<< HEAD
       {/* Canvas Tabs */}
       <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-2">
         {canvases.map((c, i) => (
@@ -325,56 +294,6 @@ function App() {
           </button>
         )}
       </div>
-=======
-      {/* New Drawing Modal */}
-      {showNewDrawingModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white rounded-lg shadow-xl max-w-xs w-full p-6 relative">
-            <button
-              onClick={() => setShowNewDrawingModal(false)}
-              className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-2xl font-bold"
-              title="Close"
-            >
-              ×
-            </button>
-            <h2 className="text-lg font-semibold mb-4 text-center">New Drawing</h2>
-            <div className="grid grid-cols-3 gap-2 mb-4">
-              {[
-                {w: 16, h: 16},
-                {w: 32, h: 32},
-                {w: 64, h: 64},
-                {w: 32, h: 64},
-                {w: 48, h: 48},
-              ].map(opt => (
-                <button
-                  key={`${opt.w}x${opt.h}`}
-                  className={`flex flex-col items-center border rounded p-2 transition-all ${selectedNewSize.w === opt.w && selectedNewSize.h === opt.h ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-gray-100 hover:bg-gray-200'}`}
-                  onClick={() => setSelectedNewSize(opt)}
-                >
-                  {renderPreview(opt.w, opt.h)}
-                  <span className="mt-1 text-xs text-gray-700">{opt.w}×{opt.h}</span>
-                </button>
-              ))}
-            </div>
-            <div className="text-center mb-4 text-sm text-gray-700">Are you sure you wanna make a new drawing? Do you wanna save the current one?</div>
-            <div className="flex justify-center gap-3">
-              <button
-                className="px-4 py-2 rounded bg-red-500 text-white font-medium hover:bg-red-600 transition"
-                onClick={handleNewDrawing}
-              >
-                Clear
-              </button>
-              <button
-                className="px-4 py-2 rounded bg-green-500 text-white font-medium hover:bg-green-600 transition"
-                onClick={handleSaveAndNew}
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
->>>>>>> 25e1782e199b6f37474dd64cca6bd961181fa8ab
       {/* Help Button */}
       <button
         onClick={openHelp}
