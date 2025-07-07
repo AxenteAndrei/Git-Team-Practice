@@ -114,6 +114,14 @@ export default function Controls({
         {/* Pixel Size Control */}
         <div className="flex items-center space-x-2">
           <label className="text-sm font-medium text-gray-700">Zoom:</label>
+          <button
+            onClick={() => onPixelSizeChange(Math.max(8, pixelSize - 2))}
+            className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 text-lg font-bold"
+            title="Zoom Out"
+            aria-label="Zoom Out"
+          >
+            −
+          </button>
           <input
             type="range"
             min="8"
@@ -122,6 +130,14 @@ export default function Controls({
             onChange={(e) => onPixelSizeChange(parseInt(e.target.value))}
             className="w-20"
           />
+          <button
+            onClick={() => onPixelSizeChange(Math.min(32, pixelSize + 2))}
+            className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 text-lg font-bold"
+            title="Zoom In"
+            aria-label="Zoom In"
+          >
+            +
+          </button>
           <span className="text-sm text-gray-500">{pixelSize}px</span>
         </div>
 

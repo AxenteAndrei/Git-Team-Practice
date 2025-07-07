@@ -1,11 +1,12 @@
 import { useState, useCallback } from 'react';
-import { Palette } from 'lucide-react';
+import { Palette, Sun, Moon } from 'lucide-react';
 import Canvas from './components/Canvas';
 import ColorPalette from './components/ColorPalette';
 import Toolbar from './components/Toolbar';
 import Controls from './components/Controls';
 import { CanvasState, Color, Tool, HistoryState, BrushShape } from './types';
 import { createEmptyCanvas, defaultColor, exportCanvasAsPNG } from './utils';
+import React from 'react';
 
 function App() {
   const [canvasState, setCanvasState] = useState<CanvasState>(() => createEmptyCanvas(32, 32));
@@ -21,6 +22,17 @@ function App() {
   const [recentCustomColors, setRecentCustomColors] = useState<Color[]>(
     Array(8).fill({ r: 255, g: 255, b: 255, a: 1 })
   );
+  const [darkMode, setDarkMode] = useState(false);
+
+  // Toggle dark mode class on html element
+  React.useEffect(() => {
+    const root = document.documentElement;
+    if (darkMode) {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+  }, [darkMode]);
 
   const pushRecentCustomColor = useCallback((color: Color) => {
     setRecentCustomColors(prev => {
@@ -146,7 +158,7 @@ function App() {
   const closeHelp = () => setShowHelp(false);
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col text-gray-900 dark:text-gray-100">
       {/* Help Button */}
       <button
         onClick={openHelp}
@@ -173,15 +185,25 @@ function App() {
         </div>
       )}
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center space-x-3">
-          <div className="p-2 bg-gradient-to-r from-blue-500 to-teal-500 rounded-lg">
-            <Palette className="h-6 w-6 text-white" />
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-gradient-to-r from-blue-500 to-teal-500 rounded-lg">
+              <Palette className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Pixel Art Studio</h1>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Create beautiful pixel art with precision</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Pixel Art Studio</h1>
-            <p className="text-sm text-gray-600">Create beautiful pixel art with precision</p>
-          </div>
+          <button
+            onClick={() => setDarkMode((d) => !d)}
+            className="ml-4 p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+            title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            aria-label="Toggle dark mode"
+          >
+            {darkMode ? <Sun className="h-5 w-5 text-yellow-400" /> : <Moon className="h-5 w-5 text-gray-800 dark:text-gray-100" />}
+          </button>
         </div>
       </div>
 
