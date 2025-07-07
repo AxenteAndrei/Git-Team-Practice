@@ -16,7 +16,7 @@ export interface CanvasState {
   height: number;
 }
 
-export type Tool = 'pencil' | 'eraser' | 'fill' | 'eyedropper' | 'brush' | 'negative';
+export type Tool = 'pencil' | 'eraser' | 'fill' | 'eyedropper' | 'brush' | 'negative' | 'shape';
 
 export type BrushShape = 'circle' | 'square';
 

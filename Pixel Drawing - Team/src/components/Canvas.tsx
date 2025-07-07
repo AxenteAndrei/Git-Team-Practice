@@ -11,6 +11,8 @@ interface CanvasProps {
   onColorPick?: (color: Color) => void;
   brushShape: BrushShape;
   brushSize: number;
+  shapeType: 'circle' | 'square' | 'rectangle' | 'smile';
+  shapeFilled: boolean;
   onCustomColorUsed?: (color: Color) => void;
 }
 
@@ -23,6 +25,8 @@ export default function Canvas({
   onColorPick,
   brushShape,
   brushSize,
+  shapeType,
+  shapeFilled,
   onCustomColorUsed
 }: CanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -291,6 +295,85 @@ export default function Canvas({
             isEmpty: false
           };
           if (useLocal) drawnPixelsRef.current.add(key);
+        }
+      }
+    } else if (currentTool === 'shape') {
+      // Draw shape at (x, y) with brushSize and shapeType
+      const size = brushSize * 2 + 1;
+      if (shapeType === 'circle' || shapeType === 'smile') {
+        // Draw filled or empty circle
+        const radius = Math.floor(size / 2);
+        for (let dy = -radius; dy <= radius; dy++) {
+          for (let dx = -radius; dx <= radius; dx++) {
+            const bx = x + dx;
+            const by = y + dy;
+            if (bx < 0 || bx >= canvasState.width || by < 0 || by >= canvasState.height) continue;
+            const dist = dx * dx + dy * dy;
+            if (
+              (shapeFilled && dist <= radius * radius) ||
+              (!shapeFilled && dist <= radius * radius && dist >= (radius - 1) * (radius - 1))
+            ) {
+              let color = currentColor;
+              if (shapeType === 'smile') {
+                // Smile: yellow face, black eyes/mouth
+                color = { r: 255, g: 221, b: 51, a: 1 };
+                // Eyes
+                if ((dy === -Math.floor(radius/2) && Math.abs(dx) === Math.floor(radius/2)) ||
+                    (dy === -Math.floor(radius/2) && dx === 0 && radius > 2)) {
+                  color = { r: 0, g: 0, b: 0, a: 1 };
+                }
+                // Smile (simple arc)
+                if (dy === Math.floor(radius/2) && Math.abs(dx) < radius/2) {
+                  color = { r: 0, g: 0, b: 0, a: 1 };
+                }
+                // Remove black middle pixel
+                if (dx === 0 && dy === 0) {
+                  color = { r: 255, g: 221, b: 51, a: 1 };
+                }
+              }
+              newPixels[by][bx] = {
+                color,
+                isEmpty: color.a === 0
+              };
+            }
+          }
+        }
+      } else if (shapeType === 'square') {
+        const half = Math.floor(size / 2);
+        for (let dy = -half; dy <= half; dy++) {
+          for (let dx = -half; dx <= half; dx++) {
+            const bx = x + dx;
+            const by = y + dy;
+            if (bx < 0 || bx >= canvasState.width || by < 0 || by >= canvasState.height) continue;
+            if (
+              (shapeFilled) ||
+              (!shapeFilled && (Math.abs(dx) === half || Math.abs(dy) === half))
+            ) {
+              newPixels[by][bx] = {
+                color: currentColor,
+                isEmpty: currentColor.a === 0
+              };
+            }
+          }
+        }
+      } else if (shapeType === 'rectangle') {
+        const halfW = size;
+        const halfH = Math.floor(size / 2);
+        for (let dy = -halfH; dy <= halfH; dy++) {
+          for (let dx = -halfW; dx <= halfW; dx++) {
+            const bx = x + dx;
+            const by = y + dy;
+            if (bx < 0 || bx >= canvasState.width || by < 0 || by >= canvasState.height) continue;
+            if (
+              (shapeFilled) ||
+              (!shapeFilled && (Math.abs(dx) === halfW || Math.abs(dy) === halfH))
+            ) {
+              newPixels[by][bx] = {
+                color: currentColor,
+                isEmpty: currentColor.a === 0
+              };
+            }
+          }
         }
       }
     }

@@ -1,5 +1,6 @@
 import { Tool, BrushShape } from '../types';
-import { Pencil, Eraser, Paintbrush, Pipette, Brush, Contrast } from 'lucide-react';
+import { Pencil, Eraser, Paintbrush, Pipette, Brush, Contrast, Square } from 'lucide-react';
+import React from 'react';
 
 interface ToolbarProps {
   currentTool: Tool;
@@ -8,6 +9,10 @@ interface ToolbarProps {
   onBrushShapeChange: (shape: BrushShape) => void;
   brushSize: number;
   onBrushSizeChange: (size: number) => void;
+  shapeType: 'circle' | 'square' | 'rectangle' | 'smile';
+  onShapeTypeChange: (type: 'circle' | 'square' | 'rectangle' | 'smile') => void;
+  shapeFilled: boolean;
+  onShapeFilledChange: (filled: boolean) => void;
 }
 
 const tools = [
@@ -17,9 +22,10 @@ const tools = [
   { id: 'eyedropper' as Tool, icon: Pipette, label: 'Eyedropper' },
   { id: 'brush' as Tool, icon: Brush, label: 'Brush' },
   { id: 'negative' as Tool, icon: Contrast, label: 'Negative Color' },
+  { id: 'shape' as Tool, icon: Square, label: 'Shape' },
 ];
 
-export default function Toolbar({ currentTool, onToolChange, brushShape, onBrushShapeChange, brushSize, onBrushSizeChange }: ToolbarProps) {
+export default function Toolbar({ currentTool, onToolChange, brushShape, onBrushShapeChange, brushSize, onBrushSizeChange, shapeType, onShapeTypeChange, shapeFilled, onShapeFilledChange }: ToolbarProps) {
   return (
     <div className="bg-white rounded-lg shadow-lg p-4 mb-4">
       <h3 className="text-lg font-semibold text-gray-800 mb-3">Tools</h3>
@@ -73,6 +79,59 @@ export default function Toolbar({ currentTool, onToolChange, brushShape, onBrush
               className="w-full"
             />
             <div className="text-xs text-gray-600 mt-1">{brushSize} px</div>
+          </div>
+        </div>
+      )}
+      {/* Shape Options */}
+      {currentTool === 'shape' && (
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2 justify-between">
+            <button
+              className={`flex-1 px-2 py-1 rounded border text-xs ${shapeType === 'circle' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+              onClick={() => onShapeTypeChange('circle')}
+            >
+              Circle
+            </button>
+            <button
+              className={`flex-1 px-2 py-1 rounded border text-xs ${shapeType === 'square' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+              onClick={() => onShapeTypeChange('square')}
+            >
+              Square
+            </button>
+            <button
+              className={`flex-1 px-2 py-1 rounded border text-xs ${shapeType === 'rectangle' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+              onClick={() => onShapeTypeChange('rectangle')}
+            >
+              Rect
+            </button>
+            <button
+              className={`flex-1 px-2 py-1 rounded border text-xs ${shapeType === 'smile' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+              onClick={() => onShapeTypeChange('smile')}
+            >
+              😊
+            </button>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Size</label>
+            <input
+              type="range"
+              min={1}
+              max={10}
+              value={brushSize}
+              onChange={e => onBrushSizeChange(Number(e.target.value))}
+              className="w-full"
+            />
+            <div className="text-xs text-gray-600 mt-1">{brushSize} px</div>
+          </div>
+          <div className="flex items-center space-x-2 mt-2">
+            <label className="text-xs font-medium text-gray-700">Fill</label>
+            <input
+              type="checkbox"
+              checked={shapeFilled}
+              onChange={e => onShapeFilledChange(e.target.checked)}
+              className="accent-blue-500"
+            />
+            <span className="text-xs text-gray-600">{shapeFilled ? 'Filled' : 'Empty'}</span>
           </div>
         </div>
       )}
