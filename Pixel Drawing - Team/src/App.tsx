@@ -42,6 +42,9 @@ function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [showNewDrawingModal, setShowNewDrawingModal] = useState(false);
   const [selectedNewSize, setSelectedNewSize] = useState<{w: number, h: number}>({w: 32, h: 32});
+  const [showNewCanvasModal, setShowNewCanvasModal] = useState(false);
+  const [newCanvasWidth, setNewCanvasWidth] = useState(32);
+  const [newCanvasHeight, setNewCanvasHeight] = useState(32);
 
   React.useEffect(() => {
     const root = document.documentElement;
@@ -65,18 +68,28 @@ function App() {
   }, []);
 
   // Canvas management
-  const addCanvas = () => {
+  const openNewCanvasModal = () => {
+    setNewCanvasWidth(32);
+    setNewCanvasHeight(32);
+    setShowNewCanvasModal(true);
+  };
+
+  const handleCreateNewCanvas = () => {
+    const width = Math.max(8, Math.min(128, newCanvasWidth));
+    const height = Math.max(8, Math.min(128, newCanvasHeight));
     setCanvases(prev => [
       ...prev,
       {
         name: `Canvas ${prev.length + 1}`,
-        canvasState: createEmptyCanvas(32, 32),
-        history: [{ canvasState: createEmptyCanvas(32, 32), timestamp: Date.now() }],
+        canvasState: createEmptyCanvas(width, height),
+        history: [{ canvasState: createEmptyCanvas(width, height), timestamp: Date.now() }],
         historyIndex: 0,
       },
     ]);
-    setActiveCanvas(canvases.length);
+    setActiveCanvas(canvases.length); // switch to new canvas
+    setShowNewCanvasModal(false);
   };
+
   const deleteCanvas = () => {
     if (canvases.length === 1) return;
     const newCanvases = canvases.filter((_, i) => i !== activeCanvas);
@@ -234,7 +247,7 @@ function App() {
           </button>
         ))}
         <button
-          onClick={addCanvas}
+          onClick={openNewCanvasModal}
           className="ml-2 px-3 py-1 rounded-t bg-green-500 text-white font-bold hover:bg-green-600 transition-colors"
           title="Add new canvas"
         >
@@ -293,6 +306,57 @@ function App() {
                 onClick={handleSaveAndNew}
               >
                 Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* New Canvas Modal */}
+      {showNewCanvasModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-xs w-full p-6 relative">
+            <button
+              onClick={() => setShowNewCanvasModal(false)}
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-2xl font-bold"
+              title="Close"
+            >
+              ×
+            </button>
+            <h2 className="text-lg font-semibold mb-4 text-center">New Canvas</h2>
+            <div className="flex flex-col gap-3 mb-4">
+              <label className="text-sm font-medium">Width:
+                <input
+                  type="number"
+                  min={8}
+                  max={128}
+                  value={newCanvasWidth}
+                  onChange={e => setNewCanvasWidth(Number(e.target.value))}
+                  className="ml-2 w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                />
+              </label>
+              <label className="text-sm font-medium">Height:
+                <input
+                  type="number"
+                  min={8}
+                  max={128}
+                  value={newCanvasHeight}
+                  onChange={e => setNewCanvasHeight(Number(e.target.value))}
+                  className="ml-2 w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                />
+              </label>
+            </div>
+            <div className="flex justify-center gap-3">
+              <button
+                className="px-4 py-2 rounded bg-green-500 text-white font-medium hover:bg-green-600 transition"
+                onClick={handleCreateNewCanvas}
+              >
+                Create
+              </button>
+              <button
+                className="px-4 py-2 rounded bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-100 font-medium hover:bg-gray-400 dark:hover:bg-gray-600 transition"
+                onClick={() => setShowNewCanvasModal(false)}
+              >
+                Cancel
               </button>
             </div>
           </div>
