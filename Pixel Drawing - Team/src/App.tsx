@@ -23,6 +23,8 @@ function App() {
     Array(8).fill({ r: 255, g: 255, b: 255, a: 1 })
   );
   const [darkMode, setDarkMode] = useState(false);
+  const [showNewDrawingModal, setShowNewDrawingModal] = useState(false);
+  const [selectedNewSize, setSelectedNewSize] = useState<{w: number, h: number}>({w: 32, h: 32});
 
   // Toggle dark mode class on html element
   React.useEffect(() => {
@@ -66,14 +68,6 @@ function App() {
   }, [history, historyIndex]);
 
   const handleCanvasChange = useCallback((newState: CanvasState) => {
-    setCanvasState(newState);
-    saveToHistory(newState);
-  }, [saveToHistory]);
-
-  const handleCanvasSizeChange = useCallback((width: number, height: number) => {
-    if (width < 8 || width > 128 || height < 8 || height > 128) return;
-    
-    const newState = createEmptyCanvas(width, height);
     setCanvasState(newState);
     saveToHistory(newState);
   }, [saveToHistory]);
@@ -157,8 +151,91 @@ function App() {
 
   const closeHelp = () => setShowHelp(false);
 
+  // Helper for creating a white preview
+  const renderPreview = (w: number, h: number) => (
+    <div
+      style={{
+        width: 48,
+        height: 48,
+        border: '1px solid #ccc',
+        background: 'repeating-linear-gradient(45deg, #fff, #fff 4px, #f0f0f0 4px, #f0f0f0 8px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 10,
+        color: '#888',
+        margin: '0 auto',
+      }}
+    >
+      <div style={{width: Math.max(8, 32 * w / 64), height: Math.max(8, 32 * h / 64), background: '#fff', border: '1px solid #eee'}} />
+    </div>
+  );
+
+  // Handler for new drawing
+  const handleNewDrawing = () => {
+    setCanvasState(createEmptyCanvas(selectedNewSize.w, selectedNewSize.h));
+    saveToHistory(createEmptyCanvas(selectedNewSize.w, selectedNewSize.h));
+    setShowNewDrawingModal(false);
+  };
+
+  // Handler for save and new drawing
+  const handleSaveAndNew = () => {
+    exportCanvasAsPNG(canvasState);
+    setTimeout(() => {
+      handleNewDrawing();
+    }, 100); // Give time for download
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col text-gray-900 dark:text-gray-100">
+      {/* New Drawing Modal */}
+      {showNewDrawingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-xl max-w-xs w-full p-6 relative">
+            <button
+              onClick={() => setShowNewDrawingModal(false)}
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-2xl font-bold"
+              title="Close"
+            >
+              ×
+            </button>
+            <h2 className="text-lg font-semibold mb-4 text-center">New Drawing</h2>
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              {[
+                {w: 16, h: 16},
+                {w: 32, h: 32},
+                {w: 64, h: 64},
+                {w: 32, h: 64},
+                {w: 48, h: 48},
+              ].map(opt => (
+                <button
+                  key={`${opt.w}x${opt.h}`}
+                  className={`flex flex-col items-center border rounded p-2 transition-all ${selectedNewSize.w === opt.w && selectedNewSize.h === opt.h ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-gray-100 hover:bg-gray-200'}`}
+                  onClick={() => setSelectedNewSize(opt)}
+                >
+                  {renderPreview(opt.w, opt.h)}
+                  <span className="mt-1 text-xs text-gray-700">{opt.w}×{opt.h}</span>
+                </button>
+              ))}
+            </div>
+            <div className="text-center mb-4 text-sm text-gray-700">Are you sure you wanna make a new drawing? Do you wanna save the current one?</div>
+            <div className="flex justify-center gap-3">
+              <button
+                className="px-4 py-2 rounded bg-red-500 text-white font-medium hover:bg-red-600 transition"
+                onClick={handleNewDrawing}
+              >
+                Clear
+              </button>
+              <button
+                className="px-4 py-2 rounded bg-green-500 text-white font-medium hover:bg-green-600 transition"
+                onClick={handleSaveAndNew}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Help Button */}
       <button
         onClick={openHelp}
@@ -209,9 +286,7 @@ function App() {
 
       {/* Controls */}
       <Controls
-        canvasWidth={canvasState.width}
-        canvasHeight={canvasState.height}
-        onCanvasSizeChange={handleCanvasSizeChange}
+        onNewDrawing={() => setShowNewDrawingModal(true)}
         onClearCanvas={handleClearCanvas}
         onUndo={handleUndo}
         onRedo={handleRedo}
