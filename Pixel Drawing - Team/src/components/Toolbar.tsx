@@ -1,5 +1,5 @@
 import { Tool, BrushShape } from '../types';
-import { Pencil, Eraser, Paintbrush, Pipette, Brush } from 'lucide-react';
+import { Pencil, Eraser, Paintbrush, Pipette, Brush, Contrast } from 'lucide-react';
 
 interface ToolbarProps {
   currentTool: Tool;
@@ -16,6 +16,7 @@ const tools = [
   { id: 'fill' as Tool, icon: Paintbrush, label: 'Fill' },
   { id: 'eyedropper' as Tool, icon: Pipette, label: 'Eyedropper' },
   { id: 'brush' as Tool, icon: Brush, label: 'Brush' },
+  { id: 'negative' as Tool, icon: Contrast, label: 'Negative Color' },
 ];
 
 export default function Toolbar({ currentTool, onToolChange, brushShape, onBrushShapeChange, brushSize, onBrushSizeChange }: ToolbarProps) {
@@ -43,7 +44,7 @@ export default function Toolbar({ currentTool, onToolChange, brushShape, onBrush
         })}
       </div>
       {/* Brush Options */}
-      {currentTool === 'brush' && (
+      {(currentTool === 'brush' || currentTool === 'negative') && (
         <div className="space-y-3">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Brush Shape</label>

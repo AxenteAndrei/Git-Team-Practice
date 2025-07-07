@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { CanvasState, Color, Tool, BrushShape, Pixel } from '../types';
-import { colorToString, floodFill, blendColors } from '../utils';
+import { colorToString, floodFill, blendColors, invertColor } from '../utils';
 
 interface CanvasProps {
   canvasState: CanvasState;
@@ -146,6 +146,25 @@ export default function Canvas({
     drawPixel(coords.x, coords.y, true);
   };
 
+  const getLinePoints = (x0: number, y0: number, x1: number, y1: number) => {
+    const points: { x: number; y: number }[] = [];
+    const dx = Math.abs(x1 - x0);
+    const dy = Math.abs(y1 - y0);
+    const sx = x0 < x1 ? 1 : -1;
+    const sy = y0 < y1 ? 1 : -1;
+    let err = dx - dy;
+    let x = x0;
+    let y = y0;
+    while (true) {
+      points.push({ x, y });
+      if (x === x1 && y === y1) break;
+      const e2 = 2 * err;
+      if (e2 > -dy) { err -= dy; x += sx; }
+      if (e2 < dx) { err += dx; y += sy; }
+    }
+    return points;
+  };
+
   const handleMouseMove = (event: React.MouseEvent) => {
     if (!isDrawing) return;
 
@@ -159,13 +178,17 @@ export default function Canvas({
     }
     drawnPixelsRef.current.add(key);
 
-    // Avoid drawing on the same pixel as lastDrawnPixel (legacy check)
-    if (lastDrawnPixel && coords.x === lastDrawnPixel.x && coords.y === lastDrawnPixel.y) {
-      return;
+    // Interpolate between lastDrawnPixel and current coords
+    if (lastDrawnPixel) {
+      const points = getLinePoints(lastDrawnPixel.x, lastDrawnPixel.y, coords.x, coords.y);
+      for (const point of points) {
+        drawPixel(point.x, point.y, true);
+      }
+    } else {
+      drawPixel(coords.x, coords.y, true);
     }
 
     setLastDrawnPixel(coords);
-    drawPixel(coords.x, coords.y, true);
   };
 
   const handleMouseUp = () => {
@@ -194,6 +217,12 @@ export default function Canvas({
         // This would need to be passed up to parent
         console.log('Eyedropper picked:', pixel.color);
       }
+    } else {
+      // For negative tool, reset drawnPixelsRef for single click
+      if (currentTool === 'negative') {
+        drawnPixelsRef.current = new Set();
+      }
+      drawPixel(coords.x, coords.y);
     }
   };
 
@@ -251,6 +280,18 @@ export default function Canvas({
           color: blendedColor,
           isEmpty: blendedColor.a === 0
         };
+      }
+    } else if (currentTool === 'negative') {
+      const brushPixels = getBrushPixels(x, y, brushShape, brushSize, canvasState.width, canvasState.height);
+      for (const { x: bx, y: by } of brushPixels) {
+        const key = `${bx},${by}`;
+        if (!newPixels[by][bx].isEmpty && (!useLocal || !drawnPixelsRef.current.has(key))) {
+          newPixels[by][bx] = {
+            color: invertColor(newPixels[by][bx].color),
+            isEmpty: false
+          };
+          if (useLocal) drawnPixelsRef.current.add(key);
+        }
       }
     }
 
