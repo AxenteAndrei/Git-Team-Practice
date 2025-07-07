@@ -112,3 +112,12 @@ export function blendColors(fg: Color, bg: Color): Color {
     a: a
   };
 }
+
+export function invertColor(color: Color): Color {
+  return {
+    r: 255 - color.r,
+    g: 255 - color.g,
+    b: 255 - color.b,
+    a: color.a
+  };
+}
