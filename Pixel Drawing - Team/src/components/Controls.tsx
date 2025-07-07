@@ -96,7 +96,7 @@ export default function Controls({
             onChange={handleWidthChange}
             onBlur={commitWidth}
             onKeyDown={handleWidthKeyDown}
-            className="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
+            className="w-16 px-2 py-1 border border-gray-300 rounded text-sm bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-400"
           />
           <span className="text-gray-500">×</span>
           <input
@@ -107,7 +107,7 @@ export default function Controls({
             onChange={handleHeightChange}
             onBlur={commitHeight}
             onKeyDown={handleHeightKeyDown}
-            className="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
+            className="w-16 px-2 py-1 border border-gray-300 rounded text-sm bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-400"
           />
         </div>
 
@@ -116,7 +116,7 @@ export default function Controls({
           <label className="text-sm font-medium text-gray-700">Zoom:</label>
           <button
             onClick={() => onPixelSizeChange(Math.max(8, pixelSize - 2))}
-            className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 text-lg font-bold"
+            className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 text-lg font-bold text-gray-900"
             title="Zoom Out"
             aria-label="Zoom Out"
           >
@@ -128,11 +128,11 @@ export default function Controls({
             max="32"
             value={pixelSize}
             onChange={(e) => onPixelSizeChange(parseInt(e.target.value))}
-            className="w-20"
+            className="w-20 accent-blue-500"
           />
           <button
             onClick={() => onPixelSizeChange(Math.min(32, pixelSize + 2))}
-            className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 text-lg font-bold"
+            className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 text-lg font-bold text-gray-900"
             title="Zoom In"
             aria-label="Zoom In"
           >
@@ -146,19 +146,27 @@ export default function Controls({
           <button
             onClick={onUndo}
             disabled={!canUndo}
-            className="flex items-center space-x-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+            className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg transition-colors text-sm font-medium
+              ${canUndo
+                ? 'bg-gray-100 hover:bg-gray-200 text-gray-900 cursor-pointer'
+                : 'bg-gray-200 text-gray-400 cursor-not-allowed'}
+            `}
           >
             <Undo2 size={16} />
-            <span className="text-sm">Undo</span>
+            <span>Undo</span>
           </button>
           
           <button
             onClick={onRedo}
             disabled={!canRedo}
-            className="flex items-center space-x-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+            className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg transition-colors text-sm font-medium
+              ${canRedo
+                ? 'bg-gray-100 hover:bg-gray-200 text-gray-900 cursor-pointer'
+                : 'bg-gray-200 text-gray-400 cursor-not-allowed'}
+            `}
           >
             <Redo2 size={16} />
-            <span className="text-sm">Redo</span>
+            <span>Redo</span>
           </button>
           
           <button
