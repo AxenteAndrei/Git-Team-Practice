@@ -71,27 +71,6 @@ function App() {
     });
   }, [historyIndex]);
 
-<<<<<<< HEAD
-=======
-  const handleCanvasSizeChange = useCallback((width: number, height: number) => {
-    if (width < 8 || width > 128 || height < 8 || height > 128) return;
-    
-    const newState = createEmptyCanvas(width, height);
-    setCanvasState(newState);
-    setHistory(prevHistory => {
-      const newHistory = prevHistory.slice(0, historyIndex + 1);
-      newHistory.push({ canvasState: newState, timestamp: Date.now() });
-      // Limit history to 50 entries
-      if (newHistory.length > 50) newHistory.shift();
-      return newHistory;
-    });
-    setHistoryIndex(prevIndex => {
-      const newIndex = prevIndex + 1;
-      return newIndex > 49 ? 49 : newIndex;
-    });
-  }, [historyIndex]);
-
->>>>>>> 526747acee1af149aba63c78e2efc139ccde645d
   const handleClearCanvas = useCallback(() => {
     const newState = createEmptyCanvas(canvasState.width, canvasState.height);
     setCanvasState(newState);
@@ -218,8 +197,18 @@ function App() {
 
   // Handler for new drawing
   const handleNewDrawing = () => {
-    setCanvasState(createEmptyCanvas(selectedNewSize.w, selectedNewSize.h));
-    saveToHistory(createEmptyCanvas(selectedNewSize.w, selectedNewSize.h));
+    const newState = createEmptyCanvas(selectedNewSize.w, selectedNewSize.h);
+    setCanvasState(newState);
+    setHistory(prevHistory => {
+      const newHistory = prevHistory.slice(0, historyIndex + 1);
+      newHistory.push({ canvasState: newState, timestamp: Date.now() });
+      if (newHistory.length > 50) newHistory.shift();
+      return newHistory;
+    });
+    setHistoryIndex(prevIndex => {
+      const newIndex = prevIndex + 1;
+      return newIndex > 49 ? 49 : newIndex;
+    });
     setShowNewDrawingModal(false);
   };
 
