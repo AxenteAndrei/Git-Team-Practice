@@ -107,31 +107,7 @@ function App() {
       })(),
       historyIndex: Math.min(historyIndex + 1, 49),
     });
-<<<<<<< HEAD
   }, [history, historyIndex, activeCanvas]);
-=======
-    setHistoryIndex(prevIndex => {
-      const newIndex = prevIndex + 1;
-      return newIndex > 49 ? 49 : newIndex;
-    });
-  }, [historyIndex]);
-
-  const handleClearCanvas = useCallback(() => {
-    const newState = createEmptyCanvas(canvasState.width, canvasState.height);
-    setCanvasState(newState);
-    setHistory(prevHistory => {
-      const newHistory = prevHistory.slice(0, historyIndex + 1);
-      newHistory.push({ canvasState: newState, timestamp: Date.now() });
-      // Limit history to 50 entries
-      if (newHistory.length > 50) newHistory.shift();
-      return newHistory;
-    });
-    setHistoryIndex(prevIndex => {
-      const newIndex = prevIndex + 1;
-      return newIndex > 49 ? 49 : newIndex;
-    });
-  }, [canvasState.width, canvasState.height, historyIndex]);
->>>>>>> 25e1782e199b6f37474dd64cca6bd961181fa8ab
 
   // Undo
   const handleUndo = useCallback(() => {
@@ -152,16 +128,6 @@ function App() {
       });
     }
   }, [history, historyIndex, activeCanvas]);
-
-  const handleCanvasSizeChange = useCallback((width: number, height: number) => {
-    if (width < 8 || width > 128 || height < 8 || height > 128) return;
-    const newState = createEmptyCanvas(width, height);
-    updateCurrentCanvas({
-      canvasState: newState,
-      history: [{ canvasState: newState, timestamp: Date.now() }],
-      historyIndex: 0,
-    });
-  }, [activeCanvas]);
 
   const handleClearCanvas = useCallback(() => {
     const newState = createEmptyCanvas(canvasState.width, canvasState.height);
@@ -189,7 +155,6 @@ function App() {
       width = Math.floor(width * scale);
       height = Math.floor(height * scale);
     } else {
-      // If either dimension is still above MAX_SIZE (shouldn't happen, but just in case)
       width = Math.min(width, MAX_SIZE);
       height = Math.min(height, MAX_SIZE);
     }
@@ -212,19 +177,12 @@ function App() {
       }
       pixels.push(row as Pixel[]);
     }
-    setCanvasState({ pixels, width, height });
-    setHistory(prevHistory => {
-      const newHistory = prevHistory.slice(0, historyIndex + 1);
-      newHistory.push({ canvasState: { pixels, width, height }, timestamp: Date.now() });
-      // Limit history to 50 entries
-      if (newHistory.length > 50) newHistory.shift();
-      return newHistory;
+    updateCurrentCanvas({
+      canvasState: { pixels, width, height },
+      history: [{ canvasState: { pixels, width, height }, timestamp: Date.now() }],
+      historyIndex: 0,
     });
-    setHistoryIndex(prevIndex => {
-      const newIndex = prevIndex + 1;
-      return newIndex > 49 ? 49 : newIndex;
-    });
-  }, [historyIndex]);
+  }, [activeCanvas]);
 
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < history.length - 1;
@@ -258,24 +216,23 @@ function App() {
     </div>
   );
 
-  // Handler for new drawing
+  // Handler for new drawing (modal)
   const handleNewDrawing = () => {
     const newState = createEmptyCanvas(selectedNewSize.w, selectedNewSize.h);
-    setCanvasState(newState);
-    setHistory(prevHistory => {
-      const newHistory = prevHistory.slice(0, historyIndex + 1);
-      newHistory.push({ canvasState: newState, timestamp: Date.now() });
-      if (newHistory.length > 50) newHistory.shift();
-      return newHistory;
-    });
-    setHistoryIndex(prevIndex => {
-      const newIndex = prevIndex + 1;
-      return newIndex > 49 ? 49 : newIndex;
-    });
+    setCanvases(prev => [
+      ...prev,
+      {
+        name: `Canvas ${prev.length + 1}`,
+        canvasState: newState,
+        history: [{ canvasState: newState, timestamp: Date.now() }],
+        historyIndex: 0,
+      },
+    ]);
+    setActiveCanvas(canvases.length); // switch to new canvas
     setShowNewDrawingModal(false);
   };
 
-  // Handler for save and new drawing
+  // Handler for save and new drawing (modal)
   const handleSaveAndNew = () => {
     exportCanvasAsPNG(canvasState);
     setTimeout(() => {
@@ -285,7 +242,6 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col text-gray-900 dark:text-gray-100">
-<<<<<<< HEAD
       {/* Canvas Tabs */}
       <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-2">
         {canvases.map((c, i) => (
@@ -314,7 +270,6 @@ function App() {
           </button>
         )}
       </div>
-=======
       {/* New Drawing Modal */}
       {showNewDrawingModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
@@ -363,7 +318,6 @@ function App() {
           </div>
         </div>
       )}
->>>>>>> 25e1782e199b6f37474dd64cca6bd961181fa8ab
       {/* Help Button */}
       <button
         onClick={openHelp}
@@ -411,7 +365,6 @@ function App() {
           </button>
         </div>
       </div>
-
       {/* Controls */}
       <Controls
         onNewDrawing={() => setShowNewDrawingModal(true)}
@@ -425,7 +378,6 @@ function App() {
         canRedo={canRedo}
         onImport={handleImportImage}
       />
-
       {/* Main Content */}
       <div className="flex-1 flex">
         {/* Sidebar */}
@@ -438,13 +390,11 @@ function App() {
             brushSize={brushSize}
             onBrushSizeChange={setBrushSize}
           />
-          
           <ColorPalette
             currentColor={currentColor}
             onColorChange={setCurrentColor}
             customColors={recentCustomColors}
           />
-          
           {/* Info Panel */}
           <div className="bg-white rounded-lg shadow-lg p-4">
             <h3 className="text-lg font-semibold text-gray-800 mb-3">Info</h3>
@@ -456,7 +406,6 @@ function App() {
             </div>
           </div>
         </div>
-
         {/* Canvas Area */}
         <Canvas
           canvasState={canvasState}
