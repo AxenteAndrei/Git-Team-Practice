@@ -108,6 +108,7 @@ function App() {
       historyIndex: Math.min(historyIndex + 1, 49),
     });
   }, [history, historyIndex, activeCanvas]);
+<<<<<<< HEAD
 
   const handleCanvasSizeChange = useCallback((width: number, height: number) => {
     if (width < 8 || width > 128 || height < 8 || height > 128) return;
@@ -142,6 +143,8 @@ function App() {
       return newIndex > 49 ? 49 : newIndex;
     });
   }, [canvasState.width, canvasState.height, historyIndex]);
+=======
+>>>>>>> bf35da0937e202740a6ccee13dfc6676c29ddf42
 
   // Undo
   const handleUndo = useCallback(() => {
@@ -163,6 +166,18 @@ function App() {
     }
   }, [history, historyIndex, activeCanvas]);
 
+<<<<<<< HEAD
+=======
+  const handleClearCanvas = useCallback(() => {
+    const newState = createEmptyCanvas(canvasState.width, canvasState.height);
+    updateCurrentCanvas({
+      canvasState: newState,
+      history: [{ canvasState: newState, timestamp: Date.now() }],
+      historyIndex: 0,
+    });
+  }, [canvasState.width, canvasState.height, activeCanvas]);
+
+>>>>>>> bf35da0937e202740a6ccee13dfc6676c29ddf42
   const handleExport = useCallback(() => {
     exportCanvasAsPNG(canvasState);
   }, [canvasState]);
@@ -180,7 +195,6 @@ function App() {
       width = Math.floor(width * scale);
       height = Math.floor(height * scale);
     } else {
-      // If either dimension is still above MAX_SIZE (shouldn't happen, but just in case)
       width = Math.min(width, MAX_SIZE);
       height = Math.min(height, MAX_SIZE);
     }
@@ -203,19 +217,12 @@ function App() {
       }
       pixels.push(row as Pixel[]);
     }
-    setCanvasState({ pixels, width, height });
-    setHistory(prevHistory => {
-      const newHistory = prevHistory.slice(0, historyIndex + 1);
-      newHistory.push({ canvasState: { pixels, width, height }, timestamp: Date.now() });
-      // Limit history to 50 entries
-      if (newHistory.length > 50) newHistory.shift();
-      return newHistory;
+    updateCurrentCanvas({
+      canvasState: { pixels, width, height },
+      history: [{ canvasState: { pixels, width, height }, timestamp: Date.now() }],
+      historyIndex: 0,
     });
-    setHistoryIndex(prevIndex => {
-      const newIndex = prevIndex + 1;
-      return newIndex > 49 ? 49 : newIndex;
-    });
-  }, [historyIndex]);
+  }, [activeCanvas]);
 
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < history.length - 1;
@@ -249,14 +256,23 @@ function App() {
     </div>
   );
 
-  // Handler for new drawing
+  // Handler for new drawing (modal)
   const handleNewDrawing = () => {
-    setCanvasState(createEmptyCanvas(selectedNewSize.w, selectedNewSize.h));
-    saveToHistory(createEmptyCanvas(selectedNewSize.w, selectedNewSize.h));
+    const newState = createEmptyCanvas(selectedNewSize.w, selectedNewSize.h);
+    setCanvases(prev => [
+      ...prev,
+      {
+        name: `Canvas ${prev.length + 1}`,
+        canvasState: newState,
+        history: [{ canvasState: newState, timestamp: Date.now() }],
+        historyIndex: 0,
+      },
+    ]);
+    setActiveCanvas(canvases.length); // switch to new canvas
     setShowNewDrawingModal(false);
   };
 
-  // Handler for save and new drawing
+  // Handler for save and new drawing (modal)
   const handleSaveAndNew = () => {
     exportCanvasAsPNG(canvasState);
     setTimeout(() => {
@@ -294,6 +310,57 @@ function App() {
           </button>
         )}
       </div>
+<<<<<<< HEAD
+=======
+      {/* New Drawing Modal */}
+      {showNewDrawingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-xl max-w-xs w-full p-6 relative">
+            <button
+              onClick={() => setShowNewDrawingModal(false)}
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-2xl font-bold"
+              title="Close"
+            >
+              ×
+            </button>
+            <h2 className="text-lg font-semibold mb-4 text-center">New Drawing</h2>
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              {[
+                {w: 16, h: 16},
+                {w: 32, h: 32},
+                {w: 64, h: 64},
+                {w: 32, h: 64},
+                {w: 48, h: 48},
+              ].map(opt => (
+                <button
+                  key={`${opt.w}x${opt.h}`}
+                  className={`flex flex-col items-center border rounded p-2 transition-all ${selectedNewSize.w === opt.w && selectedNewSize.h === opt.h ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-gray-100 hover:bg-gray-200'}`}
+                  onClick={() => setSelectedNewSize(opt)}
+                >
+                  {renderPreview(opt.w, opt.h)}
+                  <span className="mt-1 text-xs text-gray-700">{opt.w}×{opt.h}</span>
+                </button>
+              ))}
+            </div>
+            <div className="text-center mb-4 text-sm text-gray-700">Are you sure you wanna make a new drawing? Do you wanna save the current one?</div>
+            <div className="flex justify-center gap-3">
+              <button
+                className="px-4 py-2 rounded bg-red-500 text-white font-medium hover:bg-red-600 transition"
+                onClick={handleNewDrawing}
+              >
+                Clear
+              </button>
+              <button
+                className="px-4 py-2 rounded bg-green-500 text-white font-medium hover:bg-green-600 transition"
+                onClick={handleSaveAndNew}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+>>>>>>> bf35da0937e202740a6ccee13dfc6676c29ddf42
       {/* Help Button */}
       <button
         onClick={openHelp}
@@ -341,7 +408,6 @@ function App() {
           </button>
         </div>
       </div>
-
       {/* Controls */}
       <Controls
         onNewDrawing={() => setShowNewDrawingModal(true)}
@@ -355,7 +421,6 @@ function App() {
         canRedo={canRedo}
         onImport={handleImportImage}
       />
-
       {/* Main Content */}
       <div className="flex-1 flex">
         {/* Sidebar */}
@@ -368,13 +433,11 @@ function App() {
             brushSize={brushSize}
             onBrushSizeChange={setBrushSize}
           />
-          
           <ColorPalette
             currentColor={currentColor}
             onColorChange={setCurrentColor}
             customColors={recentCustomColors}
           />
-          
           {/* Info Panel */}
           <div className="bg-white rounded-lg shadow-lg p-4">
             <h3 className="text-lg font-semibold text-gray-800 mb-3">Info</h3>
@@ -386,7 +449,6 @@ function App() {
             </div>
           </div>
         </div>
-
         {/* Canvas Area */}
         <Canvas
           canvasState={canvasState}
