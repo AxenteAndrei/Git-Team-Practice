@@ -4,7 +4,7 @@ import Canvas from './components/Canvas';
 import ColorPalette from './components/ColorPalette';
 import Toolbar from './components/Toolbar';
 import Controls from './components/Controls';
-import { CanvasState, Color, Tool, HistoryState, BrushShape } from './types';
+import { CanvasState, Color, Tool, HistoryState, BrushShape, Pixel } from './types';
 import { createEmptyCanvas, defaultColor, exportCanvasAsPNG } from './utils';
 import React from 'react';
 
@@ -14,7 +14,7 @@ function App() {
   const [currentTool, setCurrentTool] = useState<Tool>('pencil');
   const [pixelSize, setPixelSize] = useState(16);
   const [history, setHistory] = useState<HistoryState[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [historyIndex, setHistoryIndex] = useState(0);
   const [showHelp, setShowHelp] = useState(false);
   const [readmeContent, setReadmeContent] = useState<string>('');
   const [brushShape, setBrushShape] = useState<BrushShape>('circle');
@@ -36,6 +36,13 @@ function App() {
     }
   }, [darkMode]);
 
+  // Initialize history with the initial canvas state on mount
+  React.useEffect(() => {
+    const initialState = { canvasState, timestamp: Date.now() };
+    setHistory([initialState]);
+    setHistoryIndex(0);
+  }, []);
+
   const pushRecentCustomColor = useCallback((color: Color) => {
     setRecentCustomColors(prev => {
       const colorEquals = (a: Color, b: Color) =>
@@ -48,51 +55,80 @@ function App() {
     });
   }, []);
 
-  const saveToHistory = useCallback((state: CanvasState) => {
-    const newHistoryEntry: HistoryState = {
-      canvasState: state,
-      timestamp: Date.now()
-    };
-    
-    const newHistory = history.slice(0, historyIndex + 1);
-    newHistory.push(newHistoryEntry);
-    
-    // Limit history to 50 entries
-    if (newHistory.length > 50) {
-      newHistory.shift();
-    } else {
-      setHistoryIndex(historyIndex + 1);
-    }
-    
-    setHistory(newHistory);
-  }, [history, historyIndex]);
-
+  // Save to history on every canvas change (except undo/redo)
   const handleCanvasChange = useCallback((newState: CanvasState) => {
     setCanvasState(newState);
-    saveToHistory(newState);
-  }, [saveToHistory]);
+    setHistory(prevHistory => {
+      const newHistory = prevHistory.slice(0, historyIndex + 1);
+      newHistory.push({ canvasState: newState, timestamp: Date.now() });
+      // Limit history to 50 entries
+      if (newHistory.length > 50) newHistory.shift();
+      return newHistory;
+    });
+    setHistoryIndex(prevIndex => {
+      const newIndex = prevIndex + 1;
+      return newIndex > 49 ? 49 : newIndex;
+    });
+  }, [historyIndex]);
 
+<<<<<<< HEAD
+=======
+  const handleCanvasSizeChange = useCallback((width: number, height: number) => {
+    if (width < 8 || width > 128 || height < 8 || height > 128) return;
+    
+    const newState = createEmptyCanvas(width, height);
+    setCanvasState(newState);
+    setHistory(prevHistory => {
+      const newHistory = prevHistory.slice(0, historyIndex + 1);
+      newHistory.push({ canvasState: newState, timestamp: Date.now() });
+      // Limit history to 50 entries
+      if (newHistory.length > 50) newHistory.shift();
+      return newHistory;
+    });
+    setHistoryIndex(prevIndex => {
+      const newIndex = prevIndex + 1;
+      return newIndex > 49 ? 49 : newIndex;
+    });
+  }, [historyIndex]);
+
+>>>>>>> 526747acee1af149aba63c78e2efc139ccde645d
   const handleClearCanvas = useCallback(() => {
     const newState = createEmptyCanvas(canvasState.width, canvasState.height);
     setCanvasState(newState);
-    saveToHistory(newState);
-  }, [canvasState.width, canvasState.height, saveToHistory]);
+    setHistory(prevHistory => {
+      const newHistory = prevHistory.slice(0, historyIndex + 1);
+      newHistory.push({ canvasState: newState, timestamp: Date.now() });
+      // Limit history to 50 entries
+      if (newHistory.length > 50) newHistory.shift();
+      return newHistory;
+    });
+    setHistoryIndex(prevIndex => {
+      const newIndex = prevIndex + 1;
+      return newIndex > 49 ? 49 : newIndex;
+    });
+  }, [canvasState.width, canvasState.height, historyIndex]);
 
+  // Undo
   const handleUndo = useCallback(() => {
-    if (historyIndex > 0) {
-      const newIndex = historyIndex - 1;
-      setHistoryIndex(newIndex);
-      setCanvasState(history[newIndex].canvasState);
-    }
-  }, [history, historyIndex]);
+    setHistoryIndex(prevIndex => {
+      if (prevIndex > 0) {
+        setCanvasState(history[prevIndex - 1].canvasState);
+        return prevIndex - 1;
+      }
+      return prevIndex;
+    });
+  }, [history]);
 
+  // Redo
   const handleRedo = useCallback(() => {
-    if (historyIndex < history.length - 1) {
-      const newIndex = historyIndex + 1;
-      setHistoryIndex(newIndex);
-      setCanvasState(history[newIndex].canvasState);
-    }
-  }, [history, historyIndex]);
+    setHistoryIndex(prevIndex => {
+      if (prevIndex < history.length - 1) {
+        setCanvasState(history[prevIndex + 1].canvasState);
+        return prevIndex + 1;
+      }
+      return prevIndex;
+    });
+  }, [history]);
 
   const handleExport = useCallback(() => {
     exportCanvasAsPNG(canvasState);
@@ -121,7 +157,7 @@ function App() {
     const ctx = tempCanvas.getContext('2d')!;
     ctx.drawImage(img, 0, 0, width, height);
     const imageData = ctx.getImageData(0, 0, width, height).data;
-    const pixels = [];
+    const pixels: Pixel[][] = [];
     for (let y = 0; y < height; y++) {
       const row = [];
       for (let x = 0; x < width; x++) {
@@ -132,12 +168,21 @@ function App() {
         const a = imageData[idx + 3] / 255;
         row.push({ color: { r, g, b, a }, isEmpty: a === 0 });
       }
-      pixels.push(row);
+      pixels.push(row as Pixel[]);
     }
     setCanvasState({ pixels, width, height });
-    saveToHistory({ pixels, width, height });
-    setHistoryIndex((prev) => prev + 1);
-  }, [saveToHistory]);
+    setHistory(prevHistory => {
+      const newHistory = prevHistory.slice(0, historyIndex + 1);
+      newHistory.push({ canvasState: { pixels, width, height }, timestamp: Date.now() });
+      // Limit history to 50 entries
+      if (newHistory.length > 50) newHistory.shift();
+      return newHistory;
+    });
+    setHistoryIndex(prevIndex => {
+      const newIndex = prevIndex + 1;
+      return newIndex > 49 ? 49 : newIndex;
+    });
+  }, [historyIndex]);
 
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < history.length - 1;
